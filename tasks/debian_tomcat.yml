@@ -1,0 +1,130 @@
+---
+- name: install and tomcat
+  apt: pkg={{ item }} state=present update_cache=yes cache_valid_time=3600
+  become: true
+  with_items:
+   - tomcat7
+
+- name: disable default tomcat7
+  become: true
+  service:
+    name: tomcat7
+    state: stopped
+    enabled: no
+
+- name: symlink to tomcat "bin folder"
+  become: true
+  file:
+    src: "/usr/share/tomcat7/{{ item }}"
+    dest: "/var/lib/tomcat7/{{ item }}"
+    state: link
+  with_items:
+    - bin
+    - lib
+
+- name: configure directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ tomcat_user }}"
+    group: "{{ tomcat_group }}"
+  become: true
+  with_items:
+    - "{{ tomcat_path }}"
+    - "{{ tomcat_path }}/instances"
+    - "{{ tomcat_path }}/memdump"
+    - "{{ tomcat_path }}/temp"
+    - "{{ tomcat_path }}/war"
+    - "{{ tomcat_catalina_base }}/lib"
+    - "{{ tomcat_catalina_base }}/bin"
+    - "{{ tomcat_catalina_base }}/logs"
+    - "{{ tomcat_catalina_base }}/webapps"
+    - "{{ tomcat_catalina_base }}/work"
+    - "{{ tomcat_catalina_base }}/conf/"
+
+- name: configure CATALINA_OPTS
+  template:
+    src: "{{ role_path }}/templates/{{ item }}"
+    dest: "{{ tomcat_catalina_base }}/bin/{{ item }}"
+    owner: "{{ tomcat_user }}"
+    group: "{{ tomcat_group }}"
+    mode: 0744
+  with_items:
+    - setenv.sh
+    - appenv.sh
+  become: true
+  notify: restart tomcat instance
+
+- name: configure CATALINA_BASE
+  shell: "cp -r /etc/tomcat7/* {{ tomcat_catalina_base }}/conf/; \
+          rm {{ tomcat_catalina_base }}/conf/{server.xml,tomcat-users.xml}; \
+          chown -R {{ tomcat_user }}: {{ tomcat_catalina_base }}/conf/*"
+  args:
+    executable: /bin/bash
+  become: true
+  notify: restart tomcat instance
+
+- name: configure server.xml
+  template:
+    src: "{{ role_path }}/templates/server.xml"
+    dest: "{{ tomcat_catalina_base }}/conf/server.xml"
+    owner: "{{ tomcat_user }}"
+    group: "{{ tomcat_group }}"
+    mode: 0644
+  become: true
+  notify: restart tomcat instance
+
+- name: configure context.xml
+  template:
+    src: "{{ role_path }}/templates/ROOT.xml"
+    dest: "{{ tomcat_catalina_base }}/conf/Catalina/localhost/ROOT.xml"
+    owner: "{{ tomcat_user }}"
+    group: "{{ tomcat_group }}"
+    mode: 0644
+  become: true
+  notify: restart tomcat instance
+
+- name: copy hello.war
+  copy:
+    src: "{{ role_path }}/files/hello.war"
+    dest: "{{ tomcat_path }}/war/"
+    owner: "{{ tomcat_user }}"
+    group: "{{ tomcat_group }}"
+    mode: 0644
+  become: true
+  notify: restart tomcat instance
+
+#- name: Download war file
+#  get_url:
+#    url: http://example.com/path/file.war
+#    dest: "{{ tomcat_path }}/war/"
+#    mode: 0440
+
+- name: configure tomcat-users.xml
+  copy:
+    src: "{{ role_path }}/files/tomcat-users.xml"
+    dest: "{{ tomcat_catalina_base }}/conf/tomcat-users.xml"
+    owner: "{{ tomcat_user }}"
+    group: "{{ tomcat_group }}"
+    mode: 0644
+  become: true
+  notify: restart tomcat instance
+
+- name: tomcat systemd service
+  template:
+    src: "{{ role_path }}/templates/systemd-tomcat.service"
+    dest: "/etc/systemd/system/tomcat-{{ proj_name }}.service"
+    owner: root
+    group: root
+    mode: 0644
+  become: true
+  notify: restart tomcat instance
+
+- name: enable tomcat service
+  become: true
+  systemd:
+    name: "tomcat-{{ proj_name }}.service"
+    state: started
+    enabled: no
+
+- meta: flush_handlers

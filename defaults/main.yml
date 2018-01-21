@@ -1,0 +1,21 @@
+---
+# Default variables for the Tomcat role
+
+# tomcat_download_mirror: https://archive.apache.org
+# tomcat_majorversion: 8
+# tomcat_minorversion: 0
+# tomcat_patchversion: 33
+# download_path: /tmp
+
+tomcat_user: tomcat7
+tomcat_group: tomcat7
+
+tomcat_catalina_home: /var/lib/tomcat7
+tomcat_path: "{{ proj_path }}/tomcat"
+tomcat_catalina_base: "{{ tomcat_path }}/instances"
+
+java_home: /usr/lib/jvm/java-8-openjdk-amd64
+shutdown_port: 8001
+http_port: 8081
+ajp_port: 8011
+jvmroute: jvm1a

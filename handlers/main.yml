@@ -1,0 +1,6 @@
+---
+- name: restart tomcat instance
+  become: yes
+  service:
+    name: "tomcat-{{ proj_name }}.service"
+    state: restarted

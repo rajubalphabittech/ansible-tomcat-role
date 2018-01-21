@@ -1,0 +1,26 @@
+# Systemd unit file for tomcat
+[Unit]
+Description=Apache Tomcat Web Application Container
+After=syslog.target network.target
+
+[Service]
+Type=forking
+
+Environment=JAVA_HOME={{ java_home }}
+Environment=CATALINA_PID={{ tomcat_path }}/temp/{{ proj_name }}.pid
+Environment=MEM_DUMP_DIR={{ tomcat_path }}/memdump
+Environment=CATALINA_HOME={{ tomcat_catalina_home }}
+Environment=CATALINA_BASE={{ tomcat_catalina_base }}
+
+ExecStart={{ tomcat_catalina_home }}/bin/startup.sh
+ExecStop={{ tomcat_catalina_home }}/bin/shutdown.sh
+
+User={{ tomcat_user }}
+Group={{ tomcat_group }}
+UMask=0007
+
+RestartSec=10
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
