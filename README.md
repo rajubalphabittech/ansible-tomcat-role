@@ -5,7 +5,7 @@ This is an "*ansible role*" to manage [Tomcat](http://tomcat.apache.org/): insta
 I tried to keep it as simple as I can
 
 ~~~
-ansible-tomcat-role]$ tree
+[ansible-tomcat-role]$ tree
 .
 ├── defaults
 │   └── main.yml
@@ -61,7 +61,7 @@ $> more helloApp.yml
 Directory hierarchy
 
 ~~~
-$ tree -L 5
+$ tree -L 3
 .
 ├── ansible.cfg
 ├── hosts
